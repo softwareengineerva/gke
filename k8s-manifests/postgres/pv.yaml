@@ -16,7 +16,7 @@ spec:
   csi:
     driver: pd.csi.storage.gke.io
     fsType: ext4
-    volumeHandle: projects/my-gcp-project/zones/us-central1-c/disks/postgres-data-disk
+    volumeHandle: projects/shc-labs/zones/us-central1-c/disks/postgres-data-disk
   nodeAffinity:
     required:
       nodeSelectorTerms:

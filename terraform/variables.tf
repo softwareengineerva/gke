@@ -1,7 +1,7 @@
 variable "project_id" {
   description = "GCP Project ID"
   type        = string
-  default = "shc-labs"
+  default     = "shc-labs"
 }
 
 variable "region" {
@@ -82,28 +82,10 @@ variable "enable_fluent_bit" {
   default     = true
 }
 
-variable "enable_secrets_store_csi_driver" {
-  description = "Enable Secrets Store CSI Driver"
-  type        = bool
-  default     = true
-}
-
 variable "argocd_chart_version" {
   description = "ArgoCD Helm chart version"
   type        = string
   default     = "7.7.12"
-}
-
-variable "secrets_store_csi_driver_chart_version" {
-  description = "Secrets Store CSI Driver Helm chart version"
-  type        = string
-  default     = "1.4.7"
-}
-
-variable "gcp_secrets_manager_provider_chart_version" {
-  description = "GCP Secrets Manager Provider Helm chart version"
-  type        = string
-  default     = "1.5.0"
 }
 
 variable "postgres_username" {

@@ -1,4 +1,4 @@
-project_id  = "my-gcp-project"
+project_id  = "shc-labs"
 region      = "us-central1"
 environment = "dev"
 

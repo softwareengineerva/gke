@@ -81,6 +81,7 @@ resource "helm_release" "argocd" {
   }
 
   depends_on = [
-    kubernetes_namespace.argocd
+    kubernetes_namespace.argocd,
+   // kubernetes_cluster_role_binding.terraform_admin
   ]
 }

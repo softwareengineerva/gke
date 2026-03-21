@@ -1,4 +1,5 @@
 resource "google_container_cluster" "main" {
+  provider = google-beta
   name     = var.cluster_name
   location = var.region
 
@@ -18,6 +19,10 @@ resource "google_container_cluster" "main" {
 
   workload_identity_config {
     workload_pool = "${var.project_id}.svc.id.goog"
+  }
+
+  secret_manager_config {
+    enabled = true
   }
 
   private_cluster_config {

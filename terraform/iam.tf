@@ -21,3 +21,21 @@ resource "google_project_iam_member" "node_artifact_registry" {
   role    = "roles/artifactregistry.reader"
   member  = "serviceAccount:${google_service_account.node.email}"
 }
+
+/*
+resource "kubernetes_cluster_role_binding" "terraform_admin" {
+  metadata {
+    name = "terraform-cluster-admin"
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "cluster-admin"
+  }
+  subject {
+    kind      = "User"
+    name      = "terraform-orchestration@shc-labs.iam.gserviceaccount.com"
+    api_group = "rbac.authorization.k8s.io"
+  }
+}
+*/
