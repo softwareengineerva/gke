@@ -1,0 +1,4 @@
+functions-framework==3.*
+psycopg2-binary==2.9.9
+google-cloud-secret-manager==2.16.2
+pg8000==1.30.5
