@@ -11,10 +11,31 @@ resource "google_secret_manager_secret_version" "postgres_user_value" {
   secret_data = var.postgres_username
 }
 
+data "google_project" "project" {}
+
+resource "google_pubsub_topic" "secret_rotation" {
+  name = "${local.name_prefix}-secret-rotation"
+}
+
+resource "google_pubsub_topic_iam_member" "secret_rotation_publisher" {
+  topic  = google_pubsub_topic.secret_rotation.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-secretmanager.iam.gserviceaccount.com"
+}
+
 resource "google_secret_manager_secret" "postgres_pass" {
   secret_id = "${local.name_prefix}-postgres-pass"
   replication {
     auto {}
+  }
+  
+  topics {
+    name = google_pubsub_topic.secret_rotation.id
+  }
+
+  rotation {
+    next_rotation_time = "2026-04-21T00:00:00Z" # Using 30 days from 2026-03-22
+    rotation_period    = "2592000s" # 30 days
   }
 }
 

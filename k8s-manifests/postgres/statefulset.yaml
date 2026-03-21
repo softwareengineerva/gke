@@ -22,21 +22,12 @@ spec:
             - containerPort: 5432
               name: postgres
           env:
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: username
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: password
-            - name: POSTGRES_DB
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: database
+            - name: POSTGRES_USER_FILE
+              value: /mnt/secrets-store/username
+            - name: POSTGRES_PASSWORD_FILE
+              value: /mnt/secrets-store/password
+            - name: POSTGRES_DB_FILE
+              value: /mnt/secrets-store/database
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:
@@ -75,22 +66,19 @@ spec:
             - containerPort: 9187
               name: metrics
           env:
-            - name: DATA_SOURCE_USER
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: username
-            - name: DATA_SOURCE_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: password
+            - name: DATA_SOURCE_USER_FILE
+              value: /mnt/secrets-store/username
+            - name: DATA_SOURCE_PASS_FILE
+              value: /mnt/secrets-store/password
             - name: DATA_SOURCE_URI
               value: "localhost:5432/postgres?sslmode=disable"
             # Temporarily disabled custom queries due to deprecation in v0.15.0
             # - name: PG_EXPORTER_EXTEND_QUERY_PATH
             #   value: "/etc/postgres-exporter/queries.yaml"
-          # volumeMounts:
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
           #   - name: postgres-exporter-config
           #     mountPath: /etc/postgres-exporter
           resources:
