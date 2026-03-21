@@ -13,6 +13,12 @@ resource "google_secret_manager_secret_version" "postgres_user_value" {
 
 data "google_project" "project" {}
 
+resource "google_project_service_identity" "secretmanager" {
+  provider = google-beta
+  project  = data.google_project.project.project_id
+  service  = "secretmanager.googleapis.com"
+}
+
 resource "google_pubsub_topic" "secret_rotation" {
   name = "${local.name_prefix}-secret-rotation"
 }
@@ -20,7 +26,7 @@ resource "google_pubsub_topic" "secret_rotation" {
 resource "google_pubsub_topic_iam_member" "secret_rotation_publisher" {
   topic  = google_pubsub_topic.secret_rotation.name
   role   = "roles/pubsub.publisher"
-  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-secretmanager.iam.gserviceaccount.com"
+  member = "serviceAccount:${google_project_service_identity.secretmanager.email}"
 }
 
 resource "google_secret_manager_secret" "postgres_pass" {
@@ -37,6 +43,8 @@ resource "google_secret_manager_secret" "postgres_pass" {
     next_rotation_time = "2026-04-21T00:00:00Z" # Using 30 days from 2026-03-22
     rotation_period    = "2592000s" # 30 days
   }
+
+  depends_on = [google_pubsub_topic_iam_member.secret_rotation_publisher]
 }
 
 resource "google_secret_manager_secret_version" "postgres_pass_value" {
