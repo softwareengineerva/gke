@@ -144,14 +144,19 @@ output "postgres_secrets_csi_role_arn" {
   value       = google_service_account.postgres_secrets_csi_role.email
 }
 
-output "postgres_secret_arn" {
-  description = "ARN of PostgreSQL credentials"
-  value       = google_secret_manager_secret.postgres_credentials.id
+output "postgres_user_secret_id" {
+  description = "ID of PostgreSQL user secret"
+  value       = google_secret_manager_secret.postgres_user.id
 }
 
-output "postgres_secret_name" {
-  description = "Name of PostgreSQL credentials secret"
-  value       = google_secret_manager_secret.postgres_credentials.name
+output "postgres_pass_secret_id" {
+  description = "ID of PostgreSQL password secret"
+  value       = google_secret_manager_secret.postgres_pass.id
+}
+
+output "postgres_db_secret_id" {
+  description = "ID of PostgreSQL database secret"
+  value       = google_secret_manager_secret.postgres_db.id
 }
 
 output "fluent_bit_role_arn" {
