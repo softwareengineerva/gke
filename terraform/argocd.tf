@@ -8,6 +8,10 @@ resource "kubernetes_namespace" "argocd" {
     }
   }
   depends_on = [google_container_node_pool.main]
+  
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 resource "helm_release" "argocd" {

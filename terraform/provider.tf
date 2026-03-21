@@ -16,6 +16,11 @@ provider "kubernetes" {
   host                   = "https://${google_container_cluster.main.endpoint}"
   token                  = data.google_client_config.default.access_token
   cluster_ca_certificate = base64decode(google_container_cluster.main.master_auth[0].cluster_ca_certificate)
+  # Add this to handle when cluster doesn't exist
+  ignore_annotations = [
+    "^autopilot\\.gke\\.io\\/.*",
+    "^kubectl\\.kubernetes\\.io\\/.*"
+  ]  
 }
 
 # Helm provider

@@ -32,7 +32,7 @@ resource "null_resource" "csi_gcp_provider" {
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/secrets-store-csi-driver-provider-gcp/main/deploy/provider-gcp-plugin.yaml"
+    command = "gcloud container clusters get-credentials ${var.cluster_name} --region ${var.region} --project ${var.project_id} && kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/secrets-store-csi-driver-provider-gcp/main/deploy/provider-gcp-plugin.yaml"
   }
 
   depends_on = [helm_release.secrets_store_csi_driver]
