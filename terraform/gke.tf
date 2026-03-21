@@ -63,4 +63,8 @@ resource "google_container_node_pool" "main" {
 
     resource_labels = local.common_tags
   }
+
+  lifecycle {
+    ignore_changes = [ node_count ]
+  }
 }
