@@ -1,7 +1,8 @@
 resource "google_container_cluster" "main" {
-  provider = google-beta
-  name     = var.cluster_name
-  location = var.region
+  provider            = google-beta
+  name                = var.cluster_name
+  location            = var.region
+  deletion_protection = false
 
   # We can't create a cluster with no node pool defined, but we want to only use
   # separately managed node pools. So we create the smallest possible default
