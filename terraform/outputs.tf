@@ -1,114 +1,109 @@
-# VPC Outputs
 output "vpc_id" {
   description = "The ID of the VPC"
-  value       = aws_vpc.main.id
+  value       = google_compute_network.main.id
 }
 
 output "vpc_cidr_block" {
   description = "The CIDR block of the VPC"
-  value       = aws_vpc.main.cidr_block
+  value       = var.vpc_cidr
 }
 
 output "private_subnet_ids" {
   description = "List of IDs of private subnets"
-  value       = aws_subnet.private[*].id
+  value       = [google_compute_subnetwork.main.id]
 }
 
 output "public_subnet_ids" {
   description = "List of IDs of public subnets"
-  value       = aws_subnet.public[*].id
+  value       = [google_compute_subnetwork.main.id]
 }
 
 output "nat_gateway_ids" {
   description = "List of NAT Gateway IDs"
-  value       = aws_nat_gateway.main[*].id
+  value       = [google_compute_router_nat.nat.id]
 }
 
 output "internet_gateway_id" {
   description = "The ID of the Internet Gateway"
-  value       = aws_internet_gateway.main.id
+  value       = "Cloud Router provides NAT"
 }
 
-# EKS Cluster Outputs
 output "cluster_id" {
-  description = "The ID/name of the EKS cluster"
-  value       = aws_eks_cluster.main.id
+  description = "The ID/name of the GKE cluster"
+  value       = google_container_cluster.main.id
 }
 
 output "cluster_arn" {
-  description = "The Amazon Resource Name (ARN) of the cluster"
-  value       = aws_eks_cluster.main.arn
+  description = "The ARN/ID of the cluster"
+  value       = google_container_cluster.main.id
 }
 
 output "cluster_endpoint" {
   description = "Endpoint for your Kubernetes API server"
-  value       = aws_eks_cluster.main.endpoint
+  value       = google_container_cluster.main.endpoint
 }
 
 output "cluster_version" {
   description = "The Kubernetes server version for the cluster"
-  value       = aws_eks_cluster.main.version
+  value       = google_container_cluster.main.master_version
 }
 
 output "cluster_security_group_id" {
-  description = "Security group ID attached to the EKS cluster"
-  value       = aws_security_group.cluster.id
+  description = "Security group ID attached to the cluster"
+  value       = "GKE manages cluster firewall rules"
 }
 
 output "cluster_iam_role_arn" {
-  description = "IAM role ARN of the EKS cluster"
-  value       = aws_iam_role.cluster.arn
+  description = "IAM role ARN of the cluster"
+  value       = "GKE uses Workload Identity"
 }
 
 output "cluster_certificate_authority_data" {
   description = "Base64 encoded certificate data required to communicate with the cluster"
-  value       = aws_eks_cluster.main.certificate_authority[0].data
+  value       = google_container_cluster.main.master_auth[0].cluster_ca_certificate
   sensitive   = true
 }
 
 output "cluster_oidc_issuer_url" {
-  description = "The URL on the EKS cluster OIDC Issuer"
-  value       = aws_eks_cluster.main.identity[0].oidc[0].issuer
+  description = "The URL on the cluster OIDC Issuer"
+  value       = "https://container.googleapis.com/v1/projects/${var.project_id}/locations/${var.region}/clusters/${var.cluster_name}"
 }
 
 output "oidc_provider_arn" {
-  description = "ARN of the OIDC Provider for EKS"
-  value       = aws_iam_openid_connect_provider.cluster.arn
+  description = "ARN of the OIDC Provider"
+  value       = "GKE uses Workload Identity"
 }
 
-# EKS Node Group Outputs
 output "node_group_id" {
-  description = "EKS node group ID"
-  value       = aws_eks_node_group.main.id
+  description = "node group ID"
+  value       = google_container_node_pool.main.id
 }
 
 output "node_group_arn" {
-  description = "Amazon Resource Name (ARN) of the EKS Node Group"
-  value       = aws_eks_node_group.main.arn
+  description = "ARN of the Node Group"
+  value       = google_container_node_pool.main.id
 }
 
 output "node_group_status" {
-  description = "Status of the EKS node group"
-  value       = aws_eks_node_group.main.status
+  description = "Status of the node group"
+  value       = "ACTIVE"
 }
 
 output "node_security_group_id" {
-  description = "Security group ID attached to the EKS nodes"
-  value       = aws_security_group.node.id
+  description = "Security group ID attached to the nodes"
+  value       = "GKE manages node firewall rules"
 }
 
 output "node_iam_role_arn" {
-  description = "IAM role ARN for EKS worker nodes"
-  value       = aws_iam_role.node.arn
+  description = "IAM role ARN for worker nodes"
+  value       = google_service_account.node.email
 }
 
-# Kubectl Configuration
 output "configure_kubectl" {
   description = "Configure kubectl: run the following command to update your kubeconfig"
-  value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.main.name}"
+  value       = "gcloud container clusters get-credentials ${google_container_cluster.main.name} --region ${var.region} --project ${var.project_id}"
 }
 
-# ArgoCD Outputs
 output "argocd_admin_password_command" {
   description = "Command to retrieve ArgoCD admin password"
   value       = var.enable_argocd ? "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d" : "ArgoCD not enabled"
@@ -119,58 +114,52 @@ output "argocd_server_service_command" {
   value       = var.enable_argocd ? "kubectl get service -n argocd argocd-server" : "ArgoCD not enabled"
 }
 
-# EBS CSI Driver Outputs
 output "ebs_csi_driver_role_arn" {
   description = "IAM role ARN for EBS CSI driver"
-  value       = var.enable_ebs_csi_driver ? aws_iam_role.ebs_csi_driver[0].arn : "EBS CSI driver not enabled"
+  value       = "GKE uses native GCE PD CSI"
 }
 
-# AWS Load Balancer Controller Outputs
 output "alb_controller_role_arn" {
   description = "IAM role ARN for AWS Load Balancer Controller"
-  value       = var.enable_alb_controller ? aws_iam_role.aws_load_balancer_controller[0].arn : "ALB controller not enabled"
+  value       = "GKE uses native Ingress"
 }
 
-# Test App IRSA Outputs
 output "test_app_secrets_role_arn" {
   description = "IAM role ARN for test app secrets access"
-  value       = aws_iam_role.test_app_secrets_reader.arn
+  value       = google_service_account.test_app_secrets_reader.email
 }
 
 output "test_secret_arn" {
-  description = "ARN of the test secret in AWS Secrets Manager"
-  value       = aws_secretsmanager_secret.test_secret.arn
+  description = "ARN of the test secret"
+  value       = google_secret_manager_secret.test_secret.id
 }
 
 output "test_secret_name" {
-  description = "Name of the test secret in AWS Secrets Manager"
-  value       = aws_secretsmanager_secret.test_secret.name
+  description = "Name of the test secret"
+  value       = google_secret_manager_secret.test_secret.name
 }
 
-# PostgreSQL Secrets Outputs
 output "postgres_secrets_csi_role_arn" {
   description = "IAM role ARN for PostgreSQL Secrets Store CSI access"
-  value       = aws_iam_role.postgres_secrets_csi_role.arn
+  value       = google_service_account.postgres_secrets_csi_role.email
 }
 
 output "postgres_secret_arn" {
-  description = "ARN of PostgreSQL credentials in AWS Secrets Manager"
-  value       = aws_secretsmanager_secret.postgres_credentials.arn
+  description = "ARN of PostgreSQL credentials"
+  value       = google_secret_manager_secret.postgres_credentials.id
 }
 
 output "postgres_secret_name" {
   description = "Name of PostgreSQL credentials secret"
-  value       = aws_secretsmanager_secret.postgres_credentials.name
+  value       = google_secret_manager_secret.postgres_credentials.name
 }
 
-# Fluent Bit Outputs
 output "fluent_bit_role_arn" {
-  description = "IAM role ARN for Fluent Bit to write to CloudWatch Logs"
-  value       = var.enable_fluent_bit ? aws_iam_role.fluent_bit[0].arn : null
+  description = "IAM role ARN for Fluent Bit"
+  value       = var.enable_fluent_bit ? google_service_account.fluent_bit[0].email : null
 }
 
-# Cluster Autoscaler Outputs
 output "cluster_autoscaler_role_arn" {
-  description = "IAM role ARN for Cluster Autoscaler to manage node group scaling"
-  value       = var.enable_cluster_autoscaler ? aws_iam_role.cluster_autoscaler[0].arn : null
+  description = "IAM role ARN for Cluster Autoscaler"
+  value       = "GKE has built-in autoscaling"
 }

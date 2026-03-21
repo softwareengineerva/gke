@@ -28,19 +28,16 @@ docker push softwareengineerva/backend-api:latest
 
 ```bash
 # Login to ECR
-aws ecr get-login-password --region us-east-1 | \
-  docker login --username AWS --password-stdin ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+gcloud auth configure-docker us-east1-docker.pkg.dev
 
 # Create ECR repository
-aws ecr create-repository \
-  --repository-name backend-api \
-  --region us-east-1
+gcloud artifacts repositories create backend-api --repository-format=docker --location=us-east1
 
 # Tag and push
 docker tag softwareengineerva/backend-api:latest \
-  ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/backend-api:latest
+  us-east1-docker.pkg.dev/PROJECT_ID/my-repo/backend-api:latest
 
-docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/backend-api:latest
+docker push us-east1-docker.pkg.dev/PROJECT_ID/my-repo/backend-api:latest
 ```
 
 ## API Endpoints

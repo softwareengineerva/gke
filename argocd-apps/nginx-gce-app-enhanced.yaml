@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nginx-alb
+  name: nginx-gce
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -16,12 +16,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/softwareengineerva/eks.git
+    repoURL: https://github.com/softwareengineerva/gke.git
     targetRevision: HEAD
-    path: k8s-manifests/nginx-alb/overlays/dev
+    path: k8s-manifests/nginx-gce/overlays/dev
   destination:
     server: https://kubernetes.default.svc
-    namespace: nginx-alb
+    namespace: nginx-gce
 
   # Sync Policy
   syncPolicy:

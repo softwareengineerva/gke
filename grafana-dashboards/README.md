@@ -2,7 +2,7 @@
 
 **Author:** Jian Ouyang (jian.ouyang@sapns2.com)
 
-This directory contains Grafana dashboards for monitoring load test activities in the EKS cluster.
+This directory contains Grafana dashboards for monitoring load test activities in the GKE cluster.
 
 ## Available Dashboards
 
@@ -161,7 +161,7 @@ curl -X POST http://admin:admin@localhost:3000/api/dashboards/db \
 ### NGINX Load Test
 ```bash
 # Run load test script
-cd /opt/code/aaa_all_tests/eks/scripts
+cd /opt/code/aaa_all_tests/gke/scripts
 ./nginx-load-test.sh
 
 # Monitor in Grafana
@@ -171,7 +171,7 @@ cd /opt/code/aaa_all_tests/eks/scripts
 ### PostgreSQL Load Test
 ```bash
 # Run load test script
-cd /opt/code/aaa_all_tests/eks/scripts
+cd /opt/code/aaa_all_tests/gke/scripts
 ./postgres-load-test.sh
 
 # Monitor in Grafana
@@ -254,8 +254,8 @@ Both dashboards are editable and can be customized:
 
 ## Related Files
 
-- Load test scripts: `/opt/code/aaa_all_tests/eks/scripts/`
+- Load test scripts: `/opt/code/aaa_all_tests/gke/scripts/`
   - `nginx-load-test.sh`
   - `postgres-load-test.sh`
-- Monitoring configuration: `/opt/code/aaa_all_tests/eks/k8s-manifests/monitoring/`
-- Prometheus configuration: `/opt/code/aaa_all_tests/eks/k8s-manifests/monitoring/helm-values.yaml`
+- Monitoring configuration: `/opt/code/aaa_all_tests/gke/k8s-manifests/monitoring/`
+- Prometheus configuration: `/opt/code/aaa_all_tests/gke/k8s-manifests/monitoring/helm-values.yaml`

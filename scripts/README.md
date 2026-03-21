@@ -133,7 +133,7 @@ Failure Rate:     30.00%
 
 ## Prerequisites
 
-- kubectl configured with access to the EKS cluster
+- kubectl configured with access to the GKE cluster
 - PostgreSQL pod running in `postgres` namespace
 - NGINX service running in `nginx-alb` namespace
 - Prometheus and Grafana monitoring stack deployed
@@ -194,7 +194,7 @@ Failure Rate:     30.00%
 
 ```bash
 # Add to crontab
-*/5 * * * * /path/to/eks/scripts/postgres-load-test.sh >> /tmp/postgres-load.log 2>&1
+*/5 * * * * /path/to/gke/scripts/postgres-load-test.sh >> /tmp/postgres-load.log 2>&1
 ```
 
 ### Using Kubernetes CronJob

@@ -4,7 +4,7 @@
 # Demonstrates automatic deployment and self-healing capabilities
 #
 # Author: Jian Ouyang (jian.ouyang@sapns2.com)
-# Purpose: Concur EKS POC Q&A Demo
+# Purpose: Concur GKE POC Q&A Demo
 #
 
 set -e
@@ -17,8 +17,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO_DIR="/opt/code/aaa_all_tests/eks"
-GITHUB_REPO="https://github.com/softwareengineerva/eks.git"
+REPO_DIR="/opt/code/aaa_all_tests/gke"
+GITHUB_REPO="https://github.com/softwareengineerva/gke.git"
 
 # Helper functions
 print_header() {
@@ -388,15 +388,15 @@ show_access_guide() {
 
     # CloudWatch Logs
     print_info "=== CloudWatch Logs ==="
-    echo "Log Group: /aws/eks/concur-test-eks/all-pods"
-    echo "AWS CLI: aws logs tail /aws/eks/concur-test-eks/all-pods --follow --region us-east-1"
+    echo "Log Group: /aws/gke/concur-test-gke/all-pods"
+    echo "AWS CLI: aws logs tail /aws/gke/concur-test-gke/all-pods --follow --region us-east-1"
     echo ""
 }
 
 # Interactive menu
 show_menu() {
     clear
-    print_header "ArgoCD GitOps Demo - Concur EKS POC"
+    print_header "ArgoCD GitOps Demo - Concur GKE POC"
     echo ""
     echo "Select a demo scenario:"
     echo ""

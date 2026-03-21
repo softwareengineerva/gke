@@ -22,7 +22,7 @@ spec:
       helm:
         valueFiles:
           - $values/k8s-manifests/monitoring/helm-values.yaml
-    - repoURL: https://github.com/softwareengineerva/eks.git
+    - repoURL: https://github.com/softwareengineerva/gke.git
       targetRevision: HEAD
       ref: values
   destination:

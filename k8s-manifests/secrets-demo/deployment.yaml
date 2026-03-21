@@ -16,7 +16,7 @@ spec:
       serviceAccountName: secrets-demo-sa
       initContainers:
         - name: verify-secret
-          image: public.ecr.aws/nginx/nginx:1.27-alpine
+          image: nginx:1.27-alpine
           command: ['sh', '-c', 'ls -la /mnt/secrets-store && cat /mnt/secrets-store/concur-test-test-secret && echo "Secret verified!"']
           volumeMounts:
             - name: secrets-store
@@ -24,7 +24,7 @@ spec:
               readOnly: true
       containers:
         - name: nginx
-          image: public.ecr.aws/nginx/nginx:1.27-alpine
+          image: nginx:1.27-alpine
           ports:
             - containerPort: 80
               name: http

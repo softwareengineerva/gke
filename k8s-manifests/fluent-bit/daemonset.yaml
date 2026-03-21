@@ -17,13 +17,9 @@ spec:
       serviceAccountName: fluent-bit
       containers:
         - name: fluent-bit
-          image: public.ecr.aws/aws-observability/aws-for-fluent-bit:2.32.2
+          image: fluent/fluent-bit:3.0.4
           imagePullPolicy: IfNotPresent
           env:
-            - name: AWS_REGION
-              value: "us-east-1"
-            - name: CLUSTER_NAME
-              value: "concur-test-eks"
             - name: FLB_LOG_LEVEL
               value: "info"
           resources:

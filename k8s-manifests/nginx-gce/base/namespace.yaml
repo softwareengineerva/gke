@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: nginx-alb
+  name: nginx-gce
   labels:
-    name: nginx-alb
+    name: nginx-gce
     env: dev
   annotations:
     linkerd.io/inject: enabled

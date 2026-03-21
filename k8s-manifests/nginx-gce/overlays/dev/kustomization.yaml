@@ -4,7 +4,7 @@ kind: Kustomization
 bases:
   - ../../base
 
-namespace: nginx-alb
+namespace: nginx-gce
 
 commonLabels:
   env: dev
@@ -13,7 +13,7 @@ commonLabels:
 # Valid versions: 1.27-alpine, 1.28-alpine, 1.29-alpine
 # Invalid for testing: 99.99-alpine
 images:
-  - name: public.ecr.aws/nginx/nginx
+  - name: nginx
     newName: nginx
     newTag: 1.28-alpine  # ← CHANGE THIS ONE VALUE (updates both image AND env var)
 

@@ -1,7 +1,7 @@
 # Linkerd Service Mesh Deployment Guide
 
 **Author:** Jian Ouyang (jian.ouyang@sapns2.com)
-**Cluster:** concur-test-eks (Kubernetes 1.34)
+**Cluster:** concur-test-gke (Kubernetes 1.34)
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@
 
 ## Overview
 
-This document describes the complete process of deploying and integrating Linkerd service mesh into the EKS demo environment. Linkerd provides zero-trust security (automatic mTLS), advanced observability, and traffic management without requiring any application code changes.
+This document describes the complete process of deploying and integrating Linkerd service mesh into the GKE demo environment. Linkerd provides zero-trust security (automatic mTLS), advanced observability, and traffic management without requiring any application code changes.
 
 **Key Achievement:** Successfully deployed production-ready Linkerd service mesh with:
 - ✅ Automatic mTLS encryption between all services
@@ -725,7 +725,7 @@ linkerd viz tap deploy/nginx -n nginx-alb --to svc/nginx
 # end id=5:3 proxy=in  src=10.0.1.15:54622 dst=10.0.2.59:80 tls=true duration=151µs response-length=1450B
 
 # You may also see tls=no_tls_from_remote for:
-# - AWS ALB health checks (external traffic)
+# - GCP ALB health checks (external traffic)
 # - Prometheus metrics scraping (same-pod traffic)
 
 # 5. Cleanup
@@ -1023,7 +1023,7 @@ To demonstrate real microservices traffic with Linkerd mTLS encryption, we deplo
 ```
 External Traffic
     ↓
-AWS ALB (Internet-facing)
+GCP ALB (Internet-facing)
     ↓ [unencrypted HTTP]
 nginx pods (3 replicas, meshed)
     ↓ [mTLS encrypted - tls=true]
@@ -1053,7 +1053,7 @@ postgres pod (1 replica, meshed)
 
 **3. Docker Image**
 - Built for `linux/amd64` platform
-- Stored in Amazon ECR: `865286230013.dkr.ecr.us-east-1.amazonaws.com/backend-api:latest`
+- Stored in Google ECR: `865286230013.dkr.ecr.us-east1.googleapis.com/backend-api:latest`
 - Auto-initializes PostgreSQL with sample user data on startup
 
 ### Deployment
@@ -1089,7 +1089,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/softwareengineerva/eks.git
+    repoURL: https://github.com/softwareengineerva/gke.git
     targetRevision: HEAD
     path: k8s-manifests/backend-api/base
   destination:
@@ -1165,7 +1165,7 @@ kubectl exec -n nginx-alb deploy/nginx -c nginx -- \
 }
 ```
 
-**3. Test Through AWS ALB (External Access):**
+**3. Test Through GCP ALB (External Access):**
 ```bash
 # Get ALB hostname
 ALB_URL=$(kubectl get ingress -n nginx-alb -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}')
@@ -1204,7 +1204,7 @@ wait
 
 **Expected Output - LOOK FOR `tls=true`:**
 ```
-req id=2:0 proxy=in  src=10.0.3.126:42574 dst=10.0.3.131:8080 tls=true :method=GET :authority=k8s-nginxalb-nginx-b4e33b4879-136042050.us-east-1.elb.amazonaws.com :path=/api/users
+req id=2:0 proxy=in  src=10.0.3.126:42574 dst=10.0.3.131:8080 tls=true :method=GET :authority=k8s-nginxalb-nginx-b4e33b4879-136042050.us-east1.elb.googleapis.com :path=/api/users
 rsp id=2:0 proxy=in  src=10.0.3.126:42574 dst=10.0.3.131:8080 tls=true :status=200 latency=30317µs
 end id=2:0 proxy=in  src=10.0.3.126:42574 dst=10.0.3.131:8080 tls=true duration=47µs response-length=534B
 ```
@@ -1276,7 +1276,7 @@ linkerd viz stat deploy --all-namespaces | grep -E "NAMESPACE|nginx|backend-api|
 
 ### Demo Part 2: Test API Endpoints Through ALB
 
-**Objective:** Show that the API is accessible through the AWS ALB via nginx proxy.
+**Objective:** Show that the API is accessible through the GCP ALB via nginx proxy.
 
 ```bash
 # Get ALB URL
@@ -1365,11 +1365,11 @@ done
 You should see output like this in Terminal 1:
 
 ```
-req id=2:0 proxy=in  src=10.0.3.126:42574 dst=10.0.3.131:8080 tls=true :method=GET :authority=k8s-nginxalb-nginx-xxx.elb.amazonaws.com :path=/api/users
+req id=2:0 proxy=in  src=10.0.3.126:42574 dst=10.0.3.131:8080 tls=true :method=GET :authority=k8s-nginxalb-nginx-xxx.elb.googleapis.com :path=/api/users
 rsp id=2:0 proxy=in  src=10.0.3.126:42574 dst=10.0.3.131:8080 tls=true :status=200 latency=30317µs
 end id=2:0 proxy=in  src=10.0.3.126:42574 dst=10.0.3.131:8080 tls=true duration=47µs response-length=534B
 
-req id=3:0 proxy=in  src=10.0.2.45:38912 dst=10.0.3.131:8080 tls=true :method=GET :authority=k8s-nginxalb-nginx-xxx.elb.amazonaws.com :path=/api/health
+req id=3:0 proxy=in  src=10.0.2.45:38912 dst=10.0.3.131:8080 tls=true :method=GET :authority=k8s-nginxalb-nginx-xxx.elb.googleapis.com :path=/api/health
 rsp id=3:0 proxy=in  src=10.0.2.45:38912 dst=10.0.3.131:8080 tls=true :status=200 latency=15829µs
 end id=3:0 proxy=in  src=10.0.2.45:38912 dst=10.0.3.131:8080 tls=true duration=35µs response-length=245B
 ```
@@ -1568,7 +1568,7 @@ kubectl get secret -n linkerd linkerd-trust-anchor -o jsonpath='{.data.tls\.crt}
 ```
 External Client
     ↓ HTTP
-AWS ALB
+GCP ALB
     ↓ HTTP (unencrypted)
 nginx (3 replicas)
     ↓ HTTPS with mTLS ✓ (tls=true)
@@ -1593,7 +1593,7 @@ postgres (1 replica)
 ```mermaid
 sequenceDiagram
     participant Client as External Client
-    participant ALB as AWS ALB
+    participant ALB as GCP ALB
     participant Nginx as nginx Pod<br/>(with Linkerd proxy)
     participant BackendAPI as backend-api Pod<br/>(with Linkerd proxy)
     participant Postgres as postgres Pod<br/>(with Linkerd proxy)
@@ -1890,7 +1890,7 @@ kubectl top pods -n linkerd-viz
 
 ## Conclusion
 
-Linkerd service mesh has been successfully deployed and integrated into the EKS demo environment, providing:
+Linkerd service mesh has been successfully deployed and integrated into the GKE demo environment, providing:
 
 ✅ **Zero-trust security** with automatic mTLS encryption
 ✅ **Advanced observability** with golden metrics and live traffic tap

@@ -2,16 +2,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx
-  namespace: nginx-alb
+  namespace: nginx-gce
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: nginx-alb
+      app: nginx-gce
   template:
     metadata:
       labels:
-        app: nginx-alb
+        app: nginx-gce
     spec:
       affinity:
         podAntiAffinity:
@@ -23,7 +23,7 @@ spec:
                     - key: app
                       operator: In
                       values:
-                        - nginx-alb
+                        - nginx-gce
                 topologyKey: kubernetes.io/hostname
       initContainers:
         - name: template-processor
@@ -43,7 +43,7 @@ spec:
               mountPath: /html
       containers:
         - name: nginx
-          image: public.ecr.aws/nginx/nginx:1.27-alpine
+          image: nginx:1.27-alpine
           ports:
             - containerPort: 80
               name: http

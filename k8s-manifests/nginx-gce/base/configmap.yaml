@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-html
-  namespace: nginx-alb
+  namespace: nginx-gce
 data:
   index.html: |
     <!DOCTYPE html>

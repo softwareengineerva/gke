@@ -1,51 +1,23 @@
-provider "aws" {
-  region = var.aws_region
-
-  default_tags {
-    tags = {
-      Project     = "concur-test"
-      ManagedBy   = "Terraform"
-      Environment = var.environment
-    }
-  }
+provider "google" {
+  project = var.project_id
+  region  = var.region
 }
 
-# Kubernetes provider - authenticates to EKS cluster
+# Fetch GKE cluster config
+data "google_client_config" "default" {}
+
+# Kubernetes provider
 provider "kubernetes" {
-  host                   = aws_eks_cluster.main.endpoint
-  cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args = [
-      "eks",
-      "get-token",
-      "--cluster-name",
-      aws_eks_cluster.main.name,
-      "--region",
-      var.aws_region
-    ]
-  }
+  host                   = "https://${google_container_cluster.main.endpoint}"
+  token                  = data.google_client_config.default.access_token
+  cluster_ca_certificate = base64decode(google_container_cluster.main.master_auth[0].cluster_ca_certificate)
 }
 
-# Helm provider - uses kubernetes provider configuration
+# Helm provider
 provider "helm" {
   kubernetes {
-    host                   = aws_eks_cluster.main.endpoint
-    cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
-
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      args = [
-        "eks",
-        "get-token",
-        "--cluster-name",
-        aws_eks_cluster.main.name,
-        "--region",
-        var.aws_region
-      ]
-    }
+    host                   = "https://${google_container_cluster.main.endpoint}"
+    token                  = data.google_client_config.default.access_token
+    cluster_ca_certificate = base64decode(google_container_cluster.main.master_auth[0].cluster_ca_certificate)
   }
 }

@@ -55,13 +55,8 @@ data:
         Add_prefix          k8s_
 
     [OUTPUT]
-        Name                cloudwatch_logs
+        Name                stdout
         Match               kube.*
-        region              us-east-1
-        log_group_name      /aws/eks/concur-test-eks/all-pods
-        log_stream_prefix   ${k8s_namespace_name}/${k8s_pod_name}/
-        auto_create_group   true
-        log_retention_days  7
 
   parsers.conf: |
     [PARSER]

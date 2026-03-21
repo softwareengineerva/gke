@@ -1,6 +1,6 @@
-# EKS Cluster Terraform Configuration
+# GKE Cluster Terraform Configuration
 
-This Terraform configuration creates a complete Amazon EKS cluster infrastructure with the following components:
+This Terraform configuration creates a complete Google Kubernetes Engine (GKE) cluster infrastructure with the following components:
 
 ## Author
 **Jian Ouyang** (jian.ouyang@sapns2.com)
@@ -12,31 +12,31 @@ This Terraform configuration creates a complete Amazon EKS cluster infrastructur
 - **Subnets**:
   - 3 Public subnets across 3 availability zones
   - 3 Private subnets across 3 availability zones
-  - Properly tagged for EKS load balancer integration
+  - Properly tagged for GKE load balancer integration
 - **Internet Gateway**: For public subnet internet access
 - **NAT Gateways**: One per AZ (or single if configured) for private subnet outbound access
 - **Route Tables**: Separate route tables for public and private subnets
 
 ### Security
 - **Security Groups**:
-  - EKS cluster control plane security group
-  - EKS worker node security group
+  - GKE cluster control plane security group
+  - GKE worker node security group
   - Properly configured ingress/egress rules for cluster-node communication
 
 ### IAM
-- **EKS Cluster Role**: With required policies (AmazonEKSClusterPolicy, AmazonEKSVPCResourceController)
-- **EKS Node Role**: With required policies (AmazonEKSWorkerNodePolicy, AmazonEKS_CNI_Policy, AmazonEC2ContainerRegistryReadOnly)
+- **GKE Cluster Role**: With required policies (GoogleGKEClusterPolicy, GoogleGKEVPCResourceController)
+- **GKE Node Role**: With required policies (GoogleGKEWorkerNodePolicy, GoogleGKE_CNI_Policy, GoogleEC2ContainerRegistryReadOnly)
 - **VPC CNI Role**: For IRSA (IAM Roles for Service Accounts) with VPC CNI addon
 - **OIDC Provider**: For pod-level IAM permissions
 
-### EKS Cluster
-- **EKS Control Plane**: Managed Kubernetes control plane (v1.34 by default)
-- **EKS Addons**:
+### GKE Cluster
+- **GKE Control Plane**: Managed Kubernetes control plane (v1.34 by default)
+- **GKE Addons**:
   - VPC CNI (with IRSA support)
   - CoreDNS
   - kube-proxy
-  - EKS Pod Identity Agent
-- **EKS Managed Node Group**:
+  - GKE Pod Identity Agent
+- **GKE Managed Node Group**:
   - AL2023-based nodes
   - Auto-scaling configuration
   - Deployed in private subnets
@@ -47,9 +47,9 @@ All resources use the prefix `concur-test` by default, as specified in the requi
 
 ## Prerequisites
 
-- AWS CLI configured with appropriate credentials
+- Google Cloud SDK configured with appropriate credentials
 - Terraform >= 1.0
-- AWS Provider >= 5.0
+- GCP Provider >= 5.0
 
 ## Usage
 
@@ -79,7 +79,7 @@ terraform apply
 After the cluster is created, configure kubectl to access the cluster:
 
 ```bash
-aws eks update-kubeconfig --region us-east-1 --name concur-test-eks
+gcloud container clusters get-credentials concur-test-gke --region us-east1
 ```
 
 Or use the output command:
@@ -103,8 +103,8 @@ You can customize the deployment by modifying variables in `variables.tf` or cre
 
 ```hcl
 # terraform.tfvars example
-aws_region               = "us-west-2"
-cluster_name            = "my-custom-eks"
+gcp_region               = "us-west2"
+cluster_name            = "my-custom-gke"
 cluster_version         = "1.34"
 node_group_instance_types = ["t3.medium", "t3.large"]
 node_group_desired_size  = 3
@@ -112,8 +112,8 @@ node_group_desired_size  = 3
 
 ### Key Variables
 
-- `aws_region`: AWS region for deployment (default: us-east-1)
-- `cluster_name`: Name of the EKS cluster (default: concur-test-eks)
+- `gcp_region`: GCP region for deployment (default: us-east1)
+- `cluster_name`: Name of the GKE cluster (default: concur-test-gke)
 - `cluster_version`: Kubernetes version (default: 1.34)
 - `vpc_cidr`: VPC CIDR block (default: 10.0.0.0/16)
 - `node_group_instance_types`: EC2 instance types for worker nodes (default: ["t3.medium"])
@@ -126,7 +126,7 @@ node_group_desired_size  = 3
 The configuration provides useful outputs including:
 
 - VPC and subnet IDs
-- EKS cluster endpoint and certificate
+- GKE cluster endpoint and certificate
 - kubectl configuration command
 - IAM role ARNs
 - Security group IDs
@@ -149,44 +149,44 @@ terraform destroy
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                           AWS VPC (10.0.0.0/16)                 │
+│                           GCP VPC (10.0.0.0/16)                 │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
 │  │ Public Subnet│  │ Public Subnet│  │ Public Subnet│         │
-│  │  us-east-1a  │  │  us-east-1b  │  │  us-east-1c  │         │
+│  │  us-east1a  │  │  us-east1b  │  │  us-east1c  │         │
 │  │ 10.0.101.0/24│  │ 10.0.102.0/24│  │ 10.0.103.0/24│         │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘         │
 │         │ NAT GW          │ NAT GW          │ NAT GW          │
 │         │                 │                 │                 │
 │  ┌──────┴───────┐  ┌──────┴───────┐  ┌──────┴───────┐         │
 │  │Private Subnet│  │Private Subnet│  │Private Subnet│         │
-│  │  us-east-1a  │  │  us-east-1b  │  │  us-east-1c  │         │
+│  │  us-east1a  │  │  us-east1b  │  │  us-east1c  │         │
 │  │  10.0.1.0/24 │  │  10.0.2.0/24 │  │  10.0.3.0/24 │         │
 │  └──────────────┘  └──────────────┘  └──────────────┘         │
 │         │                 │                 │                 │
 │         └─────────────────┴─────────────────┘                 │
 │                           │                                   │
 │                  ┌────────┴─────────┐                         │
-│                  │  EKS Node Group  │                         │
+│                  │  GKE Node Group  │                         │
 │                  │   (AL2023 Nodes) │                         │
 │                  └──────────────────┘                         │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
                               │
                     ┌─────────┴──────────┐
-                    │  EKS Control Plane │
+                    │  GKE Control Plane │
                     │    (Managed)       │
                     └────────────────────┘
 ```
 
 ## Notes
 
-- The EKS cluster is configured with both public and private endpoint access
+- The GKE cluster is configured with both public and private endpoint access
 - Worker nodes are deployed in private subnets for security
 - NAT Gateways enable outbound internet access for private subnets
 - All resources are tagged with the project name "concur-test"
-- The configuration follows AWS EKS best practices
+- The configuration follows GCP GKE best practices
 - Cluster logging is enabled for audit and troubleshooting
 
 ## Support

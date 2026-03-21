@@ -12,11 +12,11 @@ spec:
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: gp3
+  storageClassName: standard-rwo
   csi:
-    driver: ebs.csi.aws.com
+    driver: pd.csi.storage.gke.io
     fsType: ext4
-    volumeHandle: vol-0886f863d62d6fda8
+    volumeHandle: projects/my-gcp-project/zones/us-central1-c/disks/postgres-data-disk
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -24,4 +24,4 @@ spec:
             - key: topology.kubernetes.io/zone
               operator: In
               values:
-                - us-east-1c
+                - us-central1-c

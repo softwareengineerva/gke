@@ -1,6 +1,6 @@
 # Linkerd Service Mesh Configuration
 
-This directory contains Linkerd service mesh deployment configuration for the EKS cluster.
+This directory contains Linkerd service mesh deployment configuration for the GKE cluster.
 
 ## Overview
 

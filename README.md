@@ -1,7 +1,7 @@
-# Concur EKS Platform - Proof of Concept
+# Concur GKE Platform - Proof of Concept
 
 **Author:** Jian Ouyang (jian.ouyang@sapns2.com)
-**Purpose:** EKS platform demonstration for Concur team
+**Purpose:** GKE platform demonstration for Concur team
 
 ---
 
@@ -21,19 +21,19 @@
 
 ## Executive Summary
 
-This POC demonstrates a production-ready Amazon EKS platform with comprehensive DevOps capabilities:
+This POC demonstrates a production-ready Google Kubernetes Engine (GKE) platform with comprehensive DevOps capabilities:
 
 **✅ Key Achievements:**
-- Multi-AZ EKS cluster (Kubernetes 1.34) with 4 nodes
+- Multi-AZ GKE cluster (Kubernetes 1.34) with 4 nodes
 - GitOps-driven deployment using ArgoCD
 - **Service Mesh:** Linkerd with automatic mTLS encryption and advanced observability
 - Complete observability: Logging (Fluent Bit → CloudWatch), Metrics (Prometheus + Grafana)
 - Auto-scaling: Cluster Autoscaler for node management
-- Security: IRSA, encrypted storage (KMS), AWS Secrets Manager integration, zero-trust mTLS
+- Security: IRSA, encrypted storage (KMS), Google Secret Manager integration, zero-trust mTLS
 - Production patterns: Sample apps with ALB ingress, PostgreSQL, Redis
 
 **📊 Platform Metrics:**
-- **Cluster:** `concur-test-eks` (us-east-1)
+- **Cluster:** `concur-test-gke` (us-east1)
 - **Nodes:** 4 t3.medium instances (auto-scaled from 3)
 - **Applications:** 10 ArgoCD apps deployed (including Linkerd)
 - **Service Mesh:** All app pods meshed with automatic mTLS
@@ -53,7 +53,7 @@ graph TB
         GitHub[GitHub Repository]
     end
 
-    subgraph AWS["AWS Account (us-east-1)"]
+    subgraph GCP["Google Cloud Project (us-east1)"]
         subgraph VPC["VPC 10.0.0.0/16"]
             subgraph PublicSubnets["Public Subnets (3 AZs)"]
                 ALB[Application Load Balancer]
@@ -63,7 +63,7 @@ graph TB
             end
 
             subgraph PrivateSubnets["Private Subnets (3 AZs)"]
-                subgraph EKS["EKS Cluster"]
+                subgraph GKE["GKE Cluster"]
                     CP[Control Plane]
 
                     subgraph NodeGroup["Node Group (4 t3.medium)"]
@@ -104,9 +104,9 @@ graph TB
             end
         end
 
-        subgraph AWSServices["AWS Services"]
+        subgraph GCPServices["Google Cloud Services"]
             CW[CloudWatch Logs]
-            KMS[AWS KMS]
+            KMS[Google Cloud KMS]
             SM[Secrets Manager]
             ECR[Container Registry]
         end
@@ -128,7 +128,7 @@ graph TB
     Secrets -->|IRSA| SM
     NodeGroup -->|Encrypted| KMS
 
-    style EKS fill:#FF9900,stroke:#232F3E,stroke-width:3px
+    style GKE fill:#FF9900,stroke:#232F3E,stroke-width:3px
     style LinkerdNS fill:#00d3af,stroke:#00a085,stroke-width:2px
     style ArgoNS fill:#6366f1,stroke:#4338ca,stroke-width:2px
     style Monitoring fill:#10b981,stroke:#059669,stroke-width:2px
@@ -141,19 +141,19 @@ graph TB
 ```mermaid
 graph LR
     subgraph VPC["VPC: 10.0.0.0/16"]
-        subgraph AZA["AZ us-east-1a"]
+        subgraph AZA["AZ us-east1a"]
             PubA["Public: 10.0.101.0/24<br/>NAT GW"]
-            PrivA["Private: 10.0.1.0/24<br/>EKS Nodes"]
+            PrivA["Private: 10.0.1.0/24<br/>GKE Nodes"]
         end
 
-        subgraph AZB["AZ us-east-1b"]
+        subgraph AZB["AZ us-east1b"]
             PubB["Public: 10.0.102.0/24<br/>NAT GW"]
-            PrivB["Private: 10.0.2.0/24<br/>EKS Nodes"]
+            PrivB["Private: 10.0.2.0/24<br/>GKE Nodes"]
         end
 
-        subgraph AZC["AZ us-east-1c"]
+        subgraph AZC["AZ us-east1c"]
             PubC["Public: 10.0.103.0/24<br/>NAT GW"]
-            PrivC["Private: 10.0.3.0/24<br/>EKS Nodes"]
+            PrivC["Private: 10.0.3.0/24<br/>GKE Nodes"]
         end
 
         IGW[Internet Gateway]
@@ -176,31 +176,31 @@ graph LR
 
 ## Infrastructure Components
 
-### 1. EKS Cluster Configuration
+### 1. GKE Cluster Configuration
 
 | Component | Configuration | Details |
 |-----------|--------------|---------|
-| **Cluster Name** | `concur-test-eks` |  |
+| **Cluster Name** | `concur-test-gke` |  |
 | **Kubernetes Version** | 1.34 | Latest version (1.34) |
-| **Region** | us-east-1 | 3 AZs for HA |
-| **Control Plane** | Managed by AWS | Private subnets only |
+| **Region** | us-east1 | 3 AZs for HA |
+| **Control Plane** | Managed by GCP | Private subnets only |
 | **Endpoints** | Public + Private | Secure access |
 | **Authentication** | API_AND_CONFIG_MAP | Supports legacy + new access |
 | **Logging** | All types enabled | api, audit, authenticator, controllerManager, scheduler |
 
-### 2. EKS Managed Add-ons
+### 2. GKE Managed Add-ons
 
 ```mermaid
 graph TD
-    EKS[EKS Cluster v1.34]
+    GKE[GKE Cluster v1.34]
 
-    EKS --> VPC_CNI["VPC CNI v1.20.5<br/>(Pod Networking)<br/>IRSA Enabled"]
-    EKS --> CoreDNS["CoreDNS v1.12.4<br/>(DNS Resolution)"]
-    EKS --> KubeProxy["kube-proxy v1.34.1<br/>(Network Proxy)"]
-    EKS --> PodID["Pod Identity Agent v1.3.10<br/>(IAM for Pods)"]
-    EKS --> EBS_CSI["EBS CSI Driver v1.53.0<br/>(Persistent Volumes)<br/>KMS Encryption"]
+    GKE --> VPC_CNI["VPC CNI v1.20.5<br/>(Pod Networking)<br/>IRSA Enabled"]
+    GKE --> CoreDNS["CoreDNS v1.12.4<br/>(DNS Resolution)"]
+    GKE --> KubeProxy["kube-proxy v1.34.1<br/>(Network Proxy)"]
+    GKE --> PodID["Pod Identity Agent v1.3.10<br/>(IAM for Pods)"]
+    GKE --> EBS_CSI["EBS CSI Driver v1.53.0<br/>(Persistent Volumes)<br/>KMS Encryption"]
 
-    style EKS fill:#FF9900,stroke:#232F3E,stroke-width:3px
+    style GKE fill:#FF9900,stroke:#232F3E,stroke-width:3px
     style VPC_CNI fill:#10b981,stroke:#059669
     style EBS_CSI fill:#3b82f6,stroke:#1d4ed8
 ```
@@ -223,13 +223,13 @@ graph TD
 | **Min Size** | 2 | Basic HA |
 | **Max Size** | 6 | Allow for growth |
 | **Desired Size** | 4 | Current load (auto-scaled) |
-| **AMI** | AL2023_x86_64_STANDARD | Latest Amazon Linux |
+| **AMI** | COS_CONTAINERD | Latest Google Linux |
 | **Disk** | 20GB gp3 encrypted | Default optimized |
 
 **Auto-Scaling Tags:**
 ```hcl
 "k8s.io/cluster-autoscaler/enabled" = "true"
-"k8s.io/cluster-autoscaler/concur-test-eks" = "owned"
+"k8s.io/cluster-autoscaler/concur-test-gke" = "owned"
 ```
 
 ### 4. IRSA (IAM Roles for Service Accounts)
@@ -238,8 +238,8 @@ graph TD
 sequenceDiagram
     participant Pod as Pod (Service Account)
     participant OIDC as OIDC Provider
-    participant STS as AWS STS
-    participant AWS as AWS Service
+    participant STS as Google Cloud IAM
+    participant GCP as GCP Service
 
     Pod->>OIDC: Request JWT Token
     OIDC->>Pod: JWT with Service Account Claims
@@ -247,16 +247,16 @@ sequenceDiagram
     STS->>STS: Validate JWT Signature
     STS->>STS: Check Trust Policy
     STS->>Pod: Temporary Credentials
-    Pod->>AWS: API Call with Credentials
-    AWS->>AWS: Validate IAM Permissions
-    AWS->>Pod: Response
+    Pod->>GCP: API Call with Credentials
+    GCP->>GCP: Validate IAM Permissions
+    GCP->>Pod: Response
 ```
 
 **IRSA Roles in Cluster:**
 1. **VPC CNI Role** - Network management
 2. **EBS CSI Driver Role** - Volume operations + KMS
 3. **Cluster Autoscaler Role** - ASG management
-4. **AWS LB Controller Role** - ALB/NLB provisioning
+4. **GKE Ingress Controller Role** - ALB/NLB provisioning
 5. **Fluent Bit Role** - CloudWatch Logs
 6. **Secrets Reader Role** - Secrets Manager access
 
@@ -433,7 +433,7 @@ graph TB
 #### 1. Repository Structure
 
 ```
-eks/
+gke/
 ├── argocd-apps/                    # ArgoCD Application CRDs
 │   ├── cluster-autoscaler-app.yaml
 │   ├── fluent-bit-app.yaml
@@ -610,15 +610,15 @@ graph TB
         Input[INPUT: tail<br/>multiline parser]
         Filter1[FILTER: kubernetes<br/>Enrich with K8s metadata]
         Filter2[FILTER: nest<br/>Flatten kubernetes field]
-        Output[OUTPUT: cloudwatch_logs<br/>Stream to AWS]
+        Output[OUTPUT: cloudwatch_logs<br/>Stream to GCP]
 
         Input -->|Raw logs| Filter1
         Filter1 -->|+ pod, namespace, labels| Filter2
         Filter2 -->|Structured JSON| Output
     end
 
-    subgraph CloudWatch["AWS CloudWatch"]
-        LG[Log Group<br/>/aws/eks/concur-test-eks/all-pods]
+    subgraph CloudWatch["Google Cloud Logging"]
+        LG[Log Group<br/>projects/PROJECT_ID/logs/concur-test-gke-all-pods]
 
         subgraph Streams["Log Streams"]
             S1[default/nginx-xxx/]
@@ -675,8 +675,8 @@ graph TB
 [OUTPUT]
   Name                cloudwatch_logs
   Match               kube.*
-  region              us-east-1
-  log_group_name      /aws/eks/concur-test-eks/all-pods
+  region              us-east1
+  log_group_name      projects/PROJECT_ID/logs/concur-test-gke-all-pods
   log_stream_prefix   ${k8s_namespace_name}/${k8s_pod_name}/
   auto_create_group   true
   log_retention_days  7
@@ -684,7 +684,7 @@ graph TB
 
 **CloudWatch Log Structure:**
 ```
-/aws/eks/concur-test-eks/all-pods
+projects/PROJECT_ID/logs/concur-test-gke-all-pods
 ├── default/nginx-7d8f9b6c-4x8vz/
 │   └── 2025/xx/xx/[$LATEST]... (JSON logs)
 ├── monitoring/prometheus-stack-kube-prom-prometheus-0/
@@ -848,12 +848,12 @@ graph TB
     end
 
     subgraph Ingress["External Access"]
-        ALB[Application Load Balancer<br/>k8s-default-nginxalb-xxx.elb.amazonaws.com]
+        ALB[Application Load Balancer<br/>k8s-default-nginxalb-xxx.elb.googleapis.com]
     end
 
-    subgraph AWSIntegration["AWS Integration"]
-        SM[AWS Secrets Manager<br/>concur-test-test-secret]
-        EBS[AWS EBS Volumes<br/>KMS Encrypted]
+    subgraph GCPIntegration["GCP Integration"]
+        SM[Google Secret Manager<br/>concur-test-test-secret]
+        EBS[GCP EBS Volumes<br/>KMS Encrypted]
     end
 
     ALB -->|HTTP| Nginx
@@ -866,12 +866,12 @@ graph TB
     style WebTier fill:#06b6d4,stroke:#0891b2
     style DataTier fill:#8b5cf6,stroke:#7c3aed
     style Security fill:#f59e0b,stroke:#d97706
-    style AWSIntegration fill:#FF9900,stroke:#232F3E
+    style GCPIntegration fill:#FF9900,stroke:#232F3E
 ```
 
 ### 1. Nginx with ALB Ingress
 
-**Purpose:** Demonstrates AWS Load Balancer Controller integration
+**Purpose:** Demonstrates GCP Load Balancer Controller integration
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -902,7 +902,7 @@ spec:
 kubectl get ingress nginx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
 
 # Test
-curl http://k8s-default-nginxalb-xxx.elb.us-east-1.amazonaws.com
+curl http://k8s-default-nginxalb-xxx.elb.us-east1.googleapis.com
 ```
 
 ### 2. PostgreSQL StatefulSet
@@ -945,14 +945,14 @@ PONG
 
 ### 4. Secrets Manager Demo
 
-**Purpose:** Demonstrates IRSA + AWS Secrets Manager integration
+**Purpose:** Demonstrates IRSA + Google Secret Manager integration
 
 ```mermaid
 sequenceDiagram
     participant Pod as Secrets Demo Pod
     participant SA as Service Account
     participant OIDC as OIDC Provider
-    participant STS as AWS STS
+    participant STS as Google Cloud IAM
     participant SM as Secrets Manager
 
     Note over Pod: Pod starts with<br/>serviceAccountName
@@ -975,7 +975,7 @@ kind: ServiceAccount
 metadata:
   name: secrets-reader
   annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT:role/test-app-secrets-reader-role"
+    iam.gke.io/gcp-service-account: "test-app-secrets-reader-sa@PROJECT_ID.iam.gserviceaccount.com"
 ---
 apiVersion: v1
 kind: Pod
@@ -999,19 +999,19 @@ spec:
 
 ```bash
 # Install required tools
-brew install kubectl argocd helm awscli
+brew install kubectl argocd helm google-cloud-sdk
 
-# Configure AWS credentials
-aws configure
+# Configure GCP credentials
+gcloud auth login
 # Use your IAM user credentials
 
 # Configure kubectl
-aws eks update-kubeconfig --region us-east-1 --name concur-test-eks
+gcloud container clusters get-credentials concur-test-gke --region us-east1
 ```
 
 ### ArgoCD Access
 
-**URL:** `http://k8s-argocd-argocdse-50d2545e50-d7cfc09ea0ab6fef.elb.us-east-1.amazonaws.com`
+**URL:** `http://k8s-argocd-argocdse-50d2545e50-d7cfc09ea0ab6fef.elb.us-east1.googleapis.com`
 
 **Credentials:**
 ```bash
@@ -1130,29 +1130,23 @@ linkerd viz routes deploy/nginx -n nginx-alb
 
 ### CloudWatch Logs Access
 
-**AWS Console:**
+**GCP Console:**
 1. Navigate to CloudWatch → Log groups
-2. Select `/aws/eks/concur-test-eks/all-pods`
+2. Select `projects/PROJECT_ID/logs/concur-test-gke-all-pods`
 3. Filter by log stream: `default/nginx-*`, `monitoring/prometheus-*`
 
-**AWS CLI:**
+**Google Cloud SDK:**
 ```bash
 # Tail all logs
-aws logs tail /aws/eks/concur-test-eks/all-pods --follow --region us-east-1
-
-# Filter by namespace
-aws logs tail /aws/eks/concur-test-eks/all-pods \
-  --follow \
-  --filter-pattern "default" \
-  --region us-east-1
+gcloud logging read "resource.type=k8s_cluster AND resource.labels.cluster_name=concur-test-gke" --limit 10
+gcloud logging read "resource.type=k8s_cluster AND resource.labels.cluster_name=concur-test-gke" --limit 10
+  --region us-east1
 
 # Query logs (CloudWatch Insights)
-aws logs start-query \
-  --log-group-name /aws/eks/concur-test-eks/all-pods \
-  --start-time $(date -u -d '1 hour ago' +%s) \
+gcloud logging read "resource.type=k8s_cluster AND resource.labels.cluster_name=concur-test-gke" --limit 10
   --end-time $(date -u +%s) \
   --query-string 'fields @timestamp, k8s_namespace_name, k8s_pod_name, log | filter k8s_namespace_name = "default"' \
-  --region us-east-1
+  --region us-east1
 ```
 
 ---
@@ -1165,8 +1159,8 @@ aws logs start-query \
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/softwareengineerva/eks.git
-cd eks
+git clone https://github.com/softwareengineerva/gke.git
+cd gke
 
 # 2. Modify nginx replicas
 vim k8s-manifests/nginx-alb/deployment.yaml
@@ -1264,10 +1258,8 @@ kubectl run log-generator --image=busybox --restart=Never \
 kubectl logs -n logging daemonset/fluent-bit --tail=20 --follow
 
 # 3. Check CloudWatch (wait 30 seconds for batch upload)
-aws logs tail /aws/eks/concur-test-eks/all-pods \
-  --follow \
-  --filter-pattern "log-generator" \
-  --region us-east-1
+gcloud logging read "resource.type=k8s_cluster AND resource.labels.cluster_name=concur-test-gke" --limit 10
+  --region us-east1
 
 # 4. Verify structured logs
 # Should see JSON with k8s_namespace_name, k8s_pod_name, etc.
@@ -1281,11 +1273,9 @@ kubectl delete pod log-generator
 **Objective:** Demonstrate IRSA + Secrets Manager
 
 ```bash
-# 1. Create a secret in AWS Secrets Manager
-aws secretsmanager create-secret \
-  --name concur-demo-db-password \
-  --secret-string '{"password":"P@ssw0rd123!"}' \
-  --region us-east-1
+# 1. Create a secret in Google Secret Manager
+gcloud secrets create test-secret --data-file=-'{"password":"P@ssw0rd123!"}' \
+  --region us-east1
 
 # 2. Update IAM policy to allow access
 # (Already configured in Terraform)
@@ -1301,10 +1291,8 @@ kubectl logs deployment/secrets-demo
 # Should show successful secret retrieval
 
 # 6. Cleanup
-aws secretsmanager delete-secret \
-  --secret-id concur-demo-db-password \
-  --force-delete-without-recovery \
-  --region us-east-1
+gcloud secrets delete test-secret --quiet \
+  --region us-east1
 ```
 
 ### Scenario 6: Service Mesh mTLS Verification
@@ -1387,7 +1375,7 @@ kubectl delete pod curl-test -n nginx-alb
 ### Security Best Practices
 
 1. **Network Isolation**
-   - EKS control plane in private subnets
+   - GKE control plane in private subnets
    - Worker nodes in private subnets (no public IPs)
    - NAT Gateways for outbound internet (e.g., pull images)
    - Security groups with least privilege
@@ -1398,7 +1386,7 @@ kubectl delete pod curl-test -n nginx-alb
    - Automatic key rotation enabled
 
 3. **Encryption in Transit**
-   - TLS for all AWS API calls
+   - TLS for all GCP API calls
    - HTTPS for ArgoCD, Grafana
    - TLS for Prometheus scraping (optional, not enabled)
    - **Linkerd mTLS:** Automatic encryption for all pod-to-pod traffic
@@ -1412,12 +1400,12 @@ kubectl delete pod curl-test -n nginx-alb
    - Kubernetes RBAC for ArgoCD service accounts
 
 5. **Secrets Management**
-   - AWS Secrets Manager for sensitive data
+   - Google Secret Manager for sensitive data
    - No secrets in Git or container images
    - IRSA-based access (no API keys)
 
 6. **Audit Logging**
-   - All EKS control plane logs enabled
+   - All GKE control plane logs enabled
    - CloudWatch log retention: 7 days
    - Fluent Bit captures all container logs
 
@@ -1427,7 +1415,7 @@ kubectl delete pod curl-test -n nginx-alb
 
 | Component | Cost | Notes |
 |-----------|------|-------|
-| EKS Control Plane | $73 | $0.10/hour |
+| GKE Control Plane | $73 | $0.10/hour |
 | EC2 t3.medium × 4 | $120 | ~$30/instance |
 | NAT Gateways × 3 | $96 | $32/NAT + data transfer |
 | EBS Volumes | $15 | ~100GB gp3 total |
@@ -1464,7 +1452,7 @@ kubectl delete pod curl-test -n nginx-alb
    - Enable state locking with DynamoDB
 
 3. **Persistent Data**
-   - Use AWS Backup for EBS snapshots
+   - Use Google Cloud Backup for EBS snapshots
    - Database exports to S3
 
 **Recovery Scenarios:**
@@ -1536,7 +1524,7 @@ kubectl apply -f argocd-apps/
 
    # Test CloudWatch API access
    kubectl exec -n logging daemonset/fluent-bit -- \
-     aws logs describe-log-groups --region us-east-1
+     gcloud logging logs list
    ```
 
 4. **Cluster Autoscaler Not Scaling**
@@ -1548,9 +1536,7 @@ kubectl apply -f argocd-apps/
    kubectl describe sa -n kube-system cluster-autoscaler
 
    # Check node group tags
-   aws eks describe-nodegroup \
-     --cluster-name concur-test-eks \
-     --nodegroup-name concur-test-eks-node-group
+   gcloud container node-pools describe concur-test-gke-node-group --cluster concur-test-gke --region us-east1
    ```
 
 ---
@@ -1560,7 +1546,7 @@ kubectl apply -f argocd-apps/
 ### Repository Structure
 
 ```
-eks/
+gke/
 ├── README.md                          # Main documentation
 ├── terraform/                         # Infrastructure as Code
 │   ├── provider.tf
@@ -1572,9 +1558,9 @@ eks/
 │   ├── vpc.tf                         # VPC, subnets, NAT, IGW
 │   ├── security-groups.tf             # Security groups
 │   ├── iam.tf                         # IAM roles (cluster, nodes, OIDC)
-│   ├── eks.tf                         # EKS cluster, node group, addons
+│   ├── gke.tf                         # GKE cluster, node group, addons
 │   ├── ebs-csi.tf                     # EBS CSI driver + IRSA
-│   ├── alb-controller.tf              # AWS LB Controller + IRSA
+│   ├── alb-controller.tf              # GKE Ingress Controller + IRSA
 │   ├── cluster-autoscaler.tf          # Cluster Autoscaler IRSA
 │   ├── postgres-secrets.tf            # PostgreSQL secrets + IRSA
 │   ├── test-app-irsa.tf               # Test app IRSA role
@@ -1706,7 +1692,7 @@ eks/
 
 **Security:**
 - ✅ IRSA: 6 roles configured
-- ✅ Secrets: AWS Secrets Manager integrated
+- ✅ Secrets: Google Secret Manager integrated
 - ✅ Network: Private subnets, security groups
 - ✅ Audit: All logs enabled
 - ✅ mTLS: All pod-to-pod traffic encrypted (Linkerd)
@@ -1715,9 +1701,9 @@ eks/
 
 ## Q&A
 
-### 1. **Why EKS over Self-Managed Kubernetes?**
-- **Managed Control Plane:** AWS handles upgrades, patching, HA
-- **AWS Integration:** Native VPC, IAM, ELB, EBS
+### 1. **Why GKE over Self-Managed Kubernetes?**
+- **Managed Control Plane:** GCP handles upgrades, patching, HA
+- **GCP Integration:** Native VPC, IAM, ELB, EBS
 - **Reliability:** 99.95% SLA for control plane
 - **Cost:** Only pay for worker nodes (control plane $73/month)
 
@@ -1778,7 +1764,7 @@ eks/
 
 ## Conclusion
 
-This POC demonstrates a **production-ready EKS platform** with:
+This POC demonstrates a **production-ready GKE platform** with:
 - ✅ Infrastructure as Code (Terraform)
 - ✅ GitOps (ArgoCD)
 - ✅ **Service Mesh (Linkerd)** - Zero-trust mTLS and advanced observability
@@ -1787,6 +1773,6 @@ This POC demonstrates a **production-ready EKS platform** with:
 - ✅ Auto-Scaling (Cluster Autoscaler)
 - ✅ Sample Applications (web, databases, secrets demo)
 
-The platform is **scalable**, **secure**, and **cost-effective**, following AWS Well-Architected Framework principles with production-grade service mesh capabilities.
+The platform is **scalable**, **secure**, and **cost-effective**, following GCP Well-Architected Framework principles with production-grade service mesh capabilities.
 
 ---

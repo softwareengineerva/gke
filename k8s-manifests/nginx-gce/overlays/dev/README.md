@@ -8,7 +8,7 @@ Edit **line 18** in `kustomization.yaml`:
 
 ```yaml
 images:
-  - name: public.ecr.aws/nginx/nginx
+  - name: nginx
     newName: nginx
     newTag: 1.28-alpine  # ← CHANGE THIS ONE LINE
 ```
@@ -70,7 +70,7 @@ git add kustomization.yaml
 git commit -m "Set NGINX to valid version"
 git push
 # Wait for ArgoCD sync
-# ✅ Get "nginx-alb is deployed and healthy" in Slack
+# ✅ Get "nginx-gce is deployed and healthy" in Slack
 ```
 
 ### 2. Break It (Degraded Demo)
@@ -80,7 +80,7 @@ git add kustomization.yaml
 git commit -m "Set NGINX to invalid version for demo"
 git push
 # Wait for ArgoCD sync
-# 🔴 Get "nginx-alb is DEGRADED" alert in Slack
+# 🔴 Get "nginx-gce is DEGRADED" alert in Slack
 ```
 
 ### 3. Fix It (Recovery Demo)
@@ -90,7 +90,7 @@ git add kustomization.yaml
 git commit -m "Restore NGINX to valid version"
 git push
 # Wait for ArgoCD sync
-# ✅ Get "nginx-alb is deployed and healthy" in Slack
+# ✅ Get "nginx-gce is deployed and healthy" in Slack
 ```
 
 ---

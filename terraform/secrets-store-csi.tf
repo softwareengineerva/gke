@@ -1,7 +1,3 @@
-# Secrets Store CSI Driver for EKS
-# Purpose: Enable pods to mount secrets from AWS Secrets Manager as volumes
-
-# Helm release for Secrets Store CSI Driver
 resource "helm_release" "secrets_store_csi_driver" {
   count      = var.enable_secrets_store_csi_driver ? 1 : 0
   name       = "secrets-store-csi-driver"
@@ -14,29 +10,26 @@ resource "helm_release" "secrets_store_csi_driver" {
     name  = "syncSecret.enabled"
     value = "true"
   }
-
   set {
     name  = "enableSecretRotation"
     value = "true"
   }
-
   set {
     name  = "rotationPollInterval"
     value = "120s"
   }
 
   depends_on = [
-    aws_eks_node_group.main
+    google_container_node_pool.main
   ]
 }
 
-# Helm release for AWS Secrets Manager CSI Provider
-resource "helm_release" "aws_secrets_manager_provider" {
+resource "helm_release" "gcp_secrets_manager_provider" {
   count      = var.enable_secrets_store_csi_driver ? 1 : 0
-  name       = "secrets-provider-aws"
-  repository = "https://aws.github.io/secrets-store-csi-driver-provider-aws"
-  chart      = "secrets-store-csi-driver-provider-aws"
-  version    = var.aws_secrets_manager_provider_chart_version
+  name       = "secrets-provider-gcp"
+  repository = "https://raw.githubusercontent.com/GoogleCloudPlatform/secrets-store-csi-driver-provider-gcp/main/charts"
+  chart      = "secrets-store-csi-driver-provider-gcp"
+  version    = var.gcp_secrets_manager_provider_chart_version
   namespace  = "kube-system"
 
   depends_on = [

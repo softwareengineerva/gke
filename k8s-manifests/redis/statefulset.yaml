@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: redis
-          image: public.ecr.aws/docker/library/redis:7.4-alpine
+          image: redis:7.4-alpine
           command:
             - redis-server
             - /etc/redis/redis.conf
@@ -58,7 +58,7 @@ spec:
         name: data
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        storageClassName: gp3
+        storageClassName: standard-rwo
         resources:
           requests:
             storage: 5Gi

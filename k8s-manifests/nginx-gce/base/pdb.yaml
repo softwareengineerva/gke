@@ -2,9 +2,9 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: nginx
-  namespace: nginx-alb
+  namespace: nginx-gce
 spec:
   minAvailable: 2
   selector:
     matchLabels:
-      app: nginx-alb
+      app: nginx-gce
