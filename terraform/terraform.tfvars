@@ -16,11 +16,11 @@ node_group_desired_size   = 4
 
 enable_argocd                   = true
 enable_fluent_bit               = true
-enable_secrets_store_csi_driver = true
+//enable_secrets_store_csi_driver = true
 
 argocd_chart_version                       = "7.7.12"
-secrets_store_csi_driver_chart_version     = "1.4.7"
-gcp_secrets_manager_provider_chart_version = "1.5.0"
+//secrets_store_csi_driver_chart_version     = "1.4.7"
+//gcp_secrets_manager_provider_chart_version = "1.5.0"
 
 postgres_username = "postgres"
 postgres_password = "CHANGE_ME"
