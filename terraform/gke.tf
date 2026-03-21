@@ -14,8 +14,8 @@ resource "google_container_cluster" "main" {
   subnetwork = google_compute_subnetwork.main.self_link
 
   ip_allocation_policy {
-    cluster_secondary_range_name  = "pod-ranges"
-    services_secondary_range_name = "service-ranges"
+    cluster_secondary_range_name  = google_compute_subnetwork.main.secondary_ip_range[0].range_name
+    services_secondary_range_name = google_compute_subnetwork.main.secondary_ip_range[1].range_name
   }
 
   workload_identity_config {
