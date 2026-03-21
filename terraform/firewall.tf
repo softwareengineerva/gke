@@ -12,5 +12,5 @@ resource "google_compute_firewall" "allow_internal" {
     protocol = "icmp"
   }
 
-  source_ranges = [var.vpc_cidr, var.pod_cidr, var.service_cidr]
+  source_ranges = [var.vpc_cidr, var.pod_cidr, var.service_cidr, "10.8.0.0/28"]
 }

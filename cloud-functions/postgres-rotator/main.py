@@ -51,27 +51,22 @@ def rotate_postgres_password(cloud_event):
          cloud_event (functions_framework.CloudEvent): The CloudEvent.
     """
     pubsub_message = base64.b64decode(cloud_event.data["message"]["data"]).decode('utf-8')
-    logger.info(f"Received message: {pubsub_message}")
-    
-    # Secret Manager sends the secret version name in the message
-    # e.g. "projects/12345/secrets/my-secret/versions/1"
-    # Actually, Secret Manager rotation notifications payload usually contains
-    # the JSON string with "name" which is the secret name.
+    print(f"Received message: {pubsub_message}")
     
     try:
         data = json.loads(pubsub_message)
-        secret_name = data.get('name') # e.g. "projects/123/secrets/my-secret"
+        secret_name = data.get('name')
         event_type = data.get('eventType')
         
         if event_type != "SECRET_ROTATE":
-             logger.info(f"Ignoring event type: {event_type}")
+             print(f"Ignoring event type: {event_type}")
              return "OK"
              
         if not secret_name:
-             logger.error("No secret name provided in event payload")
+             print("No secret name provided in event payload")
              return "Error"
              
-        logger.info(f"Rotating secret: {secret_name}")
+        print(f"Rotating secret: {secret_name}")
         
         # Get current user and database names
         db_user = get_secret(f"{DB_USER_SECRET}/versions/latest")
@@ -81,32 +76,31 @@ def rotate_postgres_password(cloud_event):
         current_password = get_secret(f"{secret_name}/versions/latest")
         
         # Connect to Postgres
-        logger.info(f"Connecting to Postgres at {DB_HOST}:{DB_PORT} as {db_user}")
+        print(f"Connecting to Postgres at {DB_HOST}:{DB_PORT} as {db_user}")
         con = pg8000.native.Connection(
             user=db_user,
             password=current_password,
             host=DB_HOST,
             port=int(DB_PORT),
-            database=db_name
+            database=db_name,
+            timeout=10 # Added timeout for safety
         )
         
         # Generate new password
         new_password = generate_password()
         
         # Update Postgres password
-        logger.info("Updating password in Postgres")
-        # Ensure the user name is safely escaped if necessary, 
-        # but here we use the safe native param binding.
+        print("Updating password in Postgres")
         con.run(f"ALTER USER {db_user} WITH PASSWORD '{new_password}';")
         con.close()
         
         # Save new password to Secret Manager
-        logger.info("Saving new password to Secret Manager")
+        print("Saving new password to Secret Manager")
         new_version_name = add_secret_version(secret_name, new_password)
-        logger.info(f"Created new secret version: {new_version_name}")
+        print(f"Created new secret version: {new_version_name}")
         
         return "Success"
 
     except Exception as e:
-        logger.error(f"Rotation failed: {str(e)}")
+        print(f"Rotation failed: {str(e)}")
         raise
