@@ -70,6 +70,18 @@ variable "node_group_desired_size" {
   default     = 2
 }
 
+variable "maintenance_start_time" {
+  description = "Maintenance window start time (UTC)"
+  type        = string
+  default     = "2025-03-23T02:00:00Z"
+}
+
+variable "maintenance_end_time" {
+  description = "Maintenance window end time (UTC)"
+  type        = string
+  default     = "2025-03-23T06:00:00Z"
+}
+
 variable "enable_argocd" {
   description = "Enable ArgoCD"
   type        = bool

@@ -1,11 +1,15 @@
 provider "google" {
   project = var.project_id
   region  = var.region
+  # Increase timeout for long-running upgrades
+  request_timeout = "60m"
 }
 
 provider "google-beta" {
   project = var.project_id
   region  = var.region
+  # Increase timeout for long-running upgrades
+  request_timeout = "60m"
 }
 
 # Fetch GKE cluster config

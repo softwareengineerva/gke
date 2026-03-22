@@ -1,3 +1,31 @@
+output "node_pool_versions" {
+  description = "Current node pool versions"
+  value = {
+    (google_container_node_pool.main.name) = google_container_node_pool.main.version
+  }
+}
+
+output "upgrade_status" {
+  description = "Instructions for monitoring upgrade"
+  value = <<-EOT
+    To monitor the upgrade process:
+    
+    1. Watch node status:
+       kubectl get nodes -w
+    
+    2. Watch pod evictions:
+       kubectl get pods --all-namespaces -o wide -w
+    
+    3. Monitor GKE operations:
+       gcloud container operations list --filter="status=RUNNING"
+    
+    4. Check node pool status:
+       gcloud container node-pools list --cluster=${var.cluster_name} --region=${var.region}
+    
+    Note: Upgrades happen during maintenance window: ${var.maintenance_start_time} to ${var.maintenance_end_time} UTC
+  EOT
+}
+
 output "vpc_id" {
   description = "The ID of the VPC"
   value       = google_compute_network.main.id

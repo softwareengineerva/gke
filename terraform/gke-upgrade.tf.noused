@@ -6,7 +6,7 @@
 #
 # HOW A SINGLE `terraform apply` EXECUTES THE UPGRADE:
 # =============================================================================
-# When you change `cluster_version` (min_master_version) or node pool `version` and run apply:
+# When you change `min_master_version` or node pool `version` and run apply:
 #
 # STEP 1: Control Plane Upgrade (if needed)
 #   - GKE upgrades the control plane during the maintenance window
@@ -40,11 +40,92 @@
 #   on pod disruption budgets and application startup times.
 # =============================================================================
 
-resource "google_container_cluster" "main" {
-  provider            = google-beta
-  name                = var.cluster_name
-  location            = var.region
-  deletion_protection = false
+# -----------------------------------------------------------------------------
+# VARIABLES - Configure these for your environment
+# -----------------------------------------------------------------------------
+variable "project_id" {
+  description = "GCP Project ID"
+  type        = string
+  default     = "your-project-id"
+}
+
+variable "region" {
+  description = "GCP Region for cluster"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "cluster_name" {
+  description = "Name of the GKE cluster"
+  type        = string
+  default     = "rk-cluster"
+}
+
+# Kubernetes version for control plane and nodes
+# Update this value to trigger upgrades
+variable "kubernetes_version" {
+  description = "Kubernetes version (e.g., 1.30, 1.30.6-gke.xxxx)"
+  type        = string
+  default     = "1.30"
+}
+
+# Node pool configurations
+variable "node_pools" {
+  description = "Configuration for node pools"
+  type = map(object({
+    machine_type = string
+    node_count   = number
+    disk_size_gb = number
+  }))
+  default = {
+    ng1 = {
+      machine_type = "n2-standard-2"
+      node_count   = 3
+      disk_size_gb = 100
+    }
+    ng2 = {
+      machine_type = "n2-standard-4"
+      node_count   = 3
+      disk_size_gb = 100
+    }
+    ng3 = {
+      machine_type = "n2-standard-2"
+      node_count   = 3
+      disk_size_gb = 200  # For stateful workloads
+    }
+  }
+}
+
+variable "maintenance_start_time" {
+  description = "Maintenance window start time (UTC)"
+  type        = string
+  default     = "2025-03-23T02:00:00Z"
+}
+
+variable "maintenance_end_time" {
+  description = "Maintenance window end time (UTC)"
+  type        = string
+  default     = "2025-03-23T06:00:00Z"
+}
+
+# -----------------------------------------------------------------------------
+# PROVIDER CONFIGURATION
+# -----------------------------------------------------------------------------
+provider "google" {
+  project = var.project_id
+  region  = var.region
+  
+  # Increase timeout for long-running upgrades
+  request_timeout = "60m"
+}
+
+# -----------------------------------------------------------------------------
+# GKE CLUSTER - Control Plane Configuration
+# -----------------------------------------------------------------------------
+resource "google_container_cluster" "rk_cluster" {
+  name     = var.cluster_name
+  location = var.region
+  project  = var.project_id
 
   # =========================================================================
   # CONTROL PLANE VERSION MANAGEMENT
@@ -56,21 +137,11 @@ resource "google_container_cluster" "main" {
   # 4. Wait for control plane to be healthy before proceeding
   # 
   # To upgrade: Change this value (e.g., from "1.29" to "1.30") and run apply
-  min_master_version = var.cluster_version
+  min_master_version = var.kubernetes_version
 
-  # We can't create a cluster with no node pool defined, but we want to only use
-  # separately managed node pools. So we create the smallest possible default
-  # node pool and immediately delete it.
+  # Remove the default node pool since we'll define our own
   remove_default_node_pool = true
   initial_node_count       = 1
-
-  network    = google_compute_network.main.self_link
-  subnetwork = google_compute_subnetwork.main.self_link
-
-  ip_allocation_policy {
-    cluster_secondary_range_name  = google_compute_subnetwork.main.secondary_ip_range[0].range_name
-    services_secondary_range_name = google_compute_subnetwork.main.secondary_ip_range[1].range_name
-  }
 
   # =========================================================================
   # MAINTENANCE WINDOW - Controls WHEN upgrades can occur
@@ -85,23 +156,62 @@ resource "google_container_cluster" "main" {
       end_time   = var.maintenance_end_time
       recurrence = "FREQ=WEEKLY"  # Repeat weekly
     }
+    
+    # Optional: Maintenance exclusions (e.g., during holidays)
+    # dynamic "maintenance_exclusion" {
+    #   for_each = []
+    #   content {
+    #     exclusion_name = "holiday-block"
+    #     start_time     = "2025-12-24T00:00:00Z"
+    #     end_time       = "2025-12-26T23:59:59Z"
+    #   }
+    # }
   }
 
-  workload_identity_config {
-    workload_pool = "${var.project_id}.svc.id.goog"
+  # =========================================================================
+  # NETWORKING CONFIGURATION
+  # =========================================================================
+  network    = "default"
+  subnetwork = "default"
+
+  # VPC-native networking
+  ip_allocation_policy {
+    cluster_secondary_range_name  = "pods"
+    services_secondary_range_name = "services"
   }
 
-  secret_manager_config {
-    enabled = true
-  }
-
+  # Private cluster configuration (optional)
   private_cluster_config {
-    enable_private_nodes    = true
+    enable_private_nodes    = false
     enable_private_endpoint = false
-    master_ipv4_cidr_block  = "172.16.0.0/28"
   }
 
-  resource_labels = local.common_tags
+  # =========================================================================
+  # ADD-ONS
+  # =========================================================================
+  addons_config {
+    http_load_balancing {
+      disabled = false
+    }
+    horizontal_pod_autoscaling {
+      disabled = false
+    }
+    network_policy_config {
+      disabled = true
+    }
+  }
+
+  # =========================================================================
+  # MONITORING & LOGGING
+  # =========================================================================
+  monitoring_service = "monitoring.googleapis.com/kubernetes"
+  logging_service    = "logging.googleapis.com/kubernetes"
+
+  # Labels for resource management
+  labels = {
+    environment = "production"
+    managed_by  = "terraform"
+  }
 
   # =========================================================================
   # LIFECYCLE MANAGEMENT
@@ -124,10 +234,19 @@ resource "google_container_cluster" "main" {
   }
 }
 
-resource "google_container_node_pool" "main" {
-  name       = "${var.cluster_name}-node-pool"
-  cluster    = google_container_cluster.main.name
-  location   = var.region
+# -----------------------------------------------------------------------------
+# NODE POOLS - With Surge Upgrade Configuration
+# -----------------------------------------------------------------------------
+# IMPORTANT: These node pools upgrade IN PARALLEL with a single terraform apply.
+# Each pool handles its own internal surge upgrade sequence automatically.
+# =============================================================================
+
+resource "google_container_node_pool" "node_pools" {
+  for_each = var.node_pools
+
+  name     = each.key
+  cluster  = google_container_cluster.rk_cluster.name
+  location = var.region
 
   # =========================================================================
   # NODE VERSION MANAGEMENT
@@ -139,14 +258,12 @@ resource "google_container_node_pool" "main" {
   # 4. Repeat until all nodes are upgraded
   # 
   # To upgrade: Change this value (e.g., from "1.29" to "1.30") and run apply
-  version = var.cluster_version
+  version = var.kubernetes_version
 
-  node_count = var.node_group_desired_size
-
-  autoscaling {
-    min_node_count = var.node_group_min_size
-    max_node_count = var.node_group_max_size
-  }
+  # =========================================================================
+  # NODE COUNT & SCALING
+  # =========================================================================
+  node_count = each.value.node_count
 
   # =========================================================================
   # SURGE UPGRADE CONFIGURATION - The "Script Replacement"
@@ -184,23 +301,37 @@ resource "google_container_node_pool" "main" {
     strategy = "SURGE"
   }
 
+  # =========================================================================
+  # NODE CONFIGURATION
+  # =========================================================================
   node_config {
-    machine_type = var.node_group_instance_types[0]
+    machine_type = each.value.machine_type
+    disk_size_gb = each.value.disk_size_gb
+    disk_type    = "pd-standard"
 
-    service_account = google_service_account.node.email
+    # OAuth scopes for node access
     oauth_scopes = [
-      "https://www.googleapis.com/auth/cloud-platform"
+      "https://www.googleapis.com/auth/cloud-platform",
+      "https://www.googleapis.com/auth/logging.write",
+      "https://www.googleapis.com/auth/monitoring",
     ]
 
-    workload_metadata_config {
-      mode = "GKE_METADATA"
+    # Metadata for node configuration
+    metadata = {
+      disable-legacy-endpoints = "true"
     }
 
+    # Labels for workload identification
     labels = {
-      environment = var.environment
+      node-pool = each.key
+      managed-by = "terraform"
     }
 
-    resource_labels = local.common_tags
+    # Tags for firewall rules
+    tags = [
+      "gke-${var.cluster_name}",
+      "gke-${var.cluster_name}-${each.key}",
+    ]
   }
 
   # =========================================================================
@@ -241,7 +372,79 @@ resource "google_container_node_pool" "main" {
   }
 
   # Terraform will wait for node pool to be ready
-  depends_on = [google_container_cluster.main]
+  depends_on = [google_container_cluster.rk_cluster]
+}
+
+# -----------------------------------------------------------------------------
+# OPTIONAL: SERVICE ACCOUNT FOR NODES
+# -----------------------------------------------------------------------------
+# Create a dedicated service account for node pools (recommended for production)
+resource "google_service_account" "gke_nodes" {
+  account_id   = "gke-nodes-${var.cluster_name}"
+  display_name = "GKE Node Service Account - ${var.cluster_name}"
+  description  = "Service account for GKE node pools"
+}
+
+# Grant necessary roles to the service account
+resource "google_project_iam_member" "gke_node_roles" {
+  for_each = toset([
+    "roles/logging.logWriter",
+    "roles/monitoring.metricWriter",
+    "roles/monitoring.viewer",
+    "roles/storage.objectViewer",
+  ])
+  
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.gke_nodes.email}"
+}
+
+# -----------------------------------------------------------------------------
+# OPTIONAL: OUTPUTS
+# -----------------------------------------------------------------------------
+output "cluster_endpoint" {
+  description = "GKE cluster endpoint"
+  value       = google_container_cluster.rk_cluster.endpoint
+  sensitive   = true
+}
+
+output "cluster_ca_certificate" {
+  description = "GKE cluster CA certificate"
+  value       = google_container_cluster.rk_cluster.master_auth[0].cluster_ca_certificate
+  sensitive   = true
+}
+
+output "cluster_version" {
+  description = "Current control plane version"
+  value       = google_container_cluster.rk_cluster.min_master_version
+}
+
+output "node_pool_versions" {
+  description = "Current node pool versions"
+  value = {
+    for name, pool in google_container_node_pool.node_pools : name => pool.version
+  }
+}
+
+output "upgrade_status" {
+  description = "Instructions for monitoring upgrade"
+  value = <<-EOT
+    To monitor the upgrade process:
+    
+    1. Watch node status:
+       kubectl get nodes -w
+    
+    2. Watch pod evictions:
+       kubectl get pods --all-namespaces -o wide -w
+    
+    3. Monitor GKE operations:
+       gcloud container operations list --filter="status=RUNNING"
+    
+    4. Check node pool status:
+       gcloud container node-pools list --cluster=${var.cluster_name} --region=${var.region}
+    
+    Note: Upgrades happen during maintenance window: ${var.maintenance_start_time} to ${var.maintenance_end_time} UTC
+  EOT
 }
 
 # -----------------------------------------------------------------------------
@@ -263,5 +466,5 @@ resource "local_file" "get_credentials" {
     kubectl get nodes -o wide
   EOT
   
-  depends_on = [google_container_cluster.main]
+  depends_on = [google_container_cluster.rk_cluster]
 }
