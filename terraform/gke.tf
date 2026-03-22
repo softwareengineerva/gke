@@ -79,12 +79,11 @@ resource "google_container_cluster" "main" {
   # upgrades only happen during the specified window.
   # 
   # For zero-downtime upgrades, set this to your off-peak hours.
-
   maintenance_policy {
     recurring_window {
       start_time = var.maintenance_start_time
       end_time   = var.maintenance_end_time
-      recurrence = "FREQ=WEEKLY"  # Repeat weekly
+      recurrence = "FREQ=DAILY"  # Repeat daily to meet 48h/32d requirement
     }
   }
 
