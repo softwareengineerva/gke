@@ -79,6 +79,7 @@ resource "google_container_cluster" "main" {
   # upgrades only happen during the specified window.
   # 
   # For zero-downtime upgrades, set this to your off-peak hours.
+
   maintenance_policy {
     recurring_window {
       start_time = var.maintenance_start_time
@@ -139,7 +140,7 @@ resource "google_container_node_pool" "main" {
   # 4. Repeat until all nodes are upgraded
   # 
   # To upgrade: Change this value (e.g., from "1.29" to "1.30") and run apply
-  version = var.cluster_version
+  version = var.node_version
 
   node_count = var.node_group_desired_size
 

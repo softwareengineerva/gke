@@ -25,9 +25,14 @@ variable "cluster_name" {
 variable "cluster_version" {
   description = "GKE cluster version"
   type        = string
-  default     = "1.28"
+  default     = "1.34"
 }
 
+variable "node_version" {
+  description = "Kubernetes version for node pools (must be <= control_plane_version)"
+  type        = string
+  default     = "1.33"  # Upgrade this SECOND after control plane is stable
+}
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string
